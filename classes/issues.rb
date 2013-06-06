@@ -7,46 +7,51 @@ class Issues
   end
 
   def create
-    CSV.foreach @csv_file, :headers => true do | entry |
 
-      # TODO: format the title properly, will we use the "Project" field?
-      body[:title] = entry[ "Subject" ]
-      body[:body]  = entry[ "Description" ]
+    CSV.foreach @csv_file, :headers => true do | entry, index |
 
-      if entry[ "Assignee" ] != '' 
-        body[:assignee] = map_user entry["Assignee"]
+      body =  {
+        :title => entry[ "Subject" ],
+        :body  => entry[ "Description" ]
+      }
+
+      if entry[ "Assignee" ] != ''
+        body[:assignee] = Users.by_assignee( entry["Assignee"] ) 
       end
 
       if entry[ "Target version" ] != ''
-        body[:milestone] = @milestones.name_to_id( entry[ "Target version" ] )
+        body[:milestone] = @milestones.name_to_id( entry[ "Target version" ] ) 
       end
 
-      body[:labels] = @entry_to_tags( entry )
+      tags = entry_to_tags( entry )
+      body[:labels] = tags if tags.length
 
-      puts "Adding issue   " + "#{body[:title]}".purple
-      puts "  assigning to " + "#{body[:assignee]}".orange if body[:assignee]
-      puts "  tags         " + "#{tags.join(',')}".blue
+      ap body
+      
 
-      issue = GitHub.post '/repos/hems/testing_github_api/issues', :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
+      # puts "Adding issue   " + "#{body[:title]}".purple
+      # puts "  assigning to " + "#{body[:assignee]}".orange if body[:assignee]
+      # puts "  tags         " + "#{tags.join(',')}".blue if tags.length
 
-      puts "  + added".green
+      # issue = GitHub.post '/repos/hems/testing_github_api/issues', :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
 
-      ap issue
+      # puts "  + added".green
 
-      comment = GitHub.post "/repos/hems/testing_github_api/issues/#{issue.parsed_response['number']}/comments", :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
+      # ap issue
 
-      puts "Added comment"
+      # comment = GitHub.post "/repos/hems/testing_github_api/issues/#{issue.parsed_response['number']}/comments", :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
 
-      puts "  + added".green
+      # puts "Added comment"
 
-      ap comment
+      # puts "  + added".green
 
-      break
+      # ap comment
 
     end
   end
 
   def entry_to_tags( entry )
+
     tags = Array.new
 
     if entry["Branch"] != ''
@@ -54,11 +59,11 @@ class Issues
     end
 
     if entry["Tracker"] != ''
-      tags.push entry["Tracker"]
+      tags.push entry["Tracker"].downcase.gsub(/ /, "_")
     end
 
     if entry["Priority"] != ''
-      tags.push entry["Priority"]
+      tags.push "priority:#{entry["Priority"].downcase.gsub(/ /, "_")}"
     end
 
     if entry["Category"] != ''
@@ -66,6 +71,7 @@ class Issues
     end
 
     tags
+
   end
 
 end

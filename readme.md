@@ -18,7 +18,7 @@ Requirements are:
 
 - Save on same folder as ruby script
 
-- Set your username and password @ "classes/github.rb"
+- Set your user map @ "classes/users.rb"
 
 - Set your repository address and CSV file name @ "_import.rb"
 

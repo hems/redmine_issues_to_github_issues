@@ -11,18 +11,18 @@ class Milestones
   end
 
   def create
-    @milestones = Hash.new
+    milestones = Hash.new
 
     CSV.foreach @csv_file, :headers => true do | entry |
 
       if entry[ "Target version" ] != ''
-        @milestones[ entry["Target version"] ] = nil
+        milestones[ entry["Target version"] ] = nil
       end
 
     end
 
     # adds milestones alphabetically
-    @milestones.keys.sort.each do | milestone |
+    milestones.keys.sort.each do | milestone |
       body = { :title => milestone }
 
       puts "Adding milestone: " + "#{milestone}".purple
@@ -30,7 +30,6 @@ class Milestones
       response = GitHub.post "#{REPO}/milestones", :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
 
       if response.has_key?("errors")
-
         response["errors"].each do | error |
           puts " - #{error["code"]}".red
         end
@@ -43,14 +42,29 @@ class Milestones
 
       # save milestone id
 
-      @milestones[ milestone ] = response[ "id" ]
+      milestones[ milestone ] = response[ "id" ]
 
     end
 
   end
 
+  # fetch all milestones from github
+  def fetch()
+    puts "+ Loading github milestones".blue
+
+    @milestones = GitHub.get "#{REPO}/milestones", :headers => {"User-Agent" => "Jamoma issues migration"}
+  end
+
   def name_to_id( name )
-    @milestones[ name ]
+
+    @milestones.each do | milestone |
+      if milestone["title"] == name
+        return milestone["id"]
+      end
+    end
+
+    ""
+
   end
 
 end
