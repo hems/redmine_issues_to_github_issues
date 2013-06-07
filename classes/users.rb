@@ -14,7 +14,7 @@ class Users
   }
 
   def self.by_assignee( assignee )
-    @@users[assignee]
+    "--#{@@users[assignee]}"
   end
 
 end

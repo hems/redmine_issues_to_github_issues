@@ -27,12 +27,14 @@ class Milestones
 
       puts "Adding milestone: " + "#{milestone}".purple
 
-      response = GitHub.post "#{REPO}/milestones", :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
+      response = GitHub.post "#{REPO}/milestones", 
+        :body => JSON.generate(body), 
+        :headers => {"User-Agent" => "Jamoma issues migration"}
 
       if response.has_key?("errors")
-        response["errors"].each do | error |
-          puts " - #{error["code"]}".red
-        end
+
+        puts "- not added".red
+        ap response
 
       else
 
@@ -59,7 +61,7 @@ class Milestones
 
     @milestones.each do | milestone |
       if milestone["title"] == name
-        return milestone["id"]
+        return milestone["number"]
       end
     end
 
