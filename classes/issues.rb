@@ -8,7 +8,10 @@ class Issues
 
   def create
 
-    CSV.foreach @csv_file, :headers => true do | entry, index |
+    index = 0
+    succesfully_added = 0
+
+    CSV.foreach @csv_file, encoding: "ISO8859-1", :headers => true do | entry |
 
       body =  {
         :title => entry[ "Subject" ],
@@ -24,20 +27,34 @@ class Issues
       end
 
       tags = entry_to_tags( entry )
+
       body[:labels] = tags if tags.length
 
-      ap body
-      
+      # ap body
 
-      # puts "Adding issue   " + "#{body[:title]}".purple
-      # puts "  assigning to " + "#{body[:assignee]}".orange if body[:assignee]
-      # puts "  tags         " + "#{tags.join(',')}".blue if tags.length
+      puts "  Adding issue: " + "#{body[:title]}".purple
+      puts "      assignee: " + "#{body[:assignee]}".red if body[:assignee]
+      puts "          tags: " + "#{tags.join(',')}".blue if tags.length
 
-      # issue = GitHub.post '/repos/hems/testing_github_api/issues', :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
+      if false
+        issue = GitHub.post "#{REPO}/issues", 
+          :body => JSON.generate(body), 
+          :headers => {"User-Agent" => "Jamoma issues migration"}
 
-      # puts "  + added".green
+        if issue.has_key?("errors")
 
-      # ap issue
+          ap issue
+
+          puts " - not added".red
+
+        else
+
+          puts "+ added".green
+
+          succesfully_added += 1
+
+        end
+      end
 
       # comment = GitHub.post "/repos/hems/testing_github_api/issues/#{issue.parsed_response['number']}/comments", :body => JSON.generate(body), :headers => {"User-Agent" => "Jamoma issues migration"}
 
@@ -47,7 +64,12 @@ class Issues
 
       # ap comment
 
+      index += 1
+
     end
+
+    puts 
+    puts "Runned through " + "#{index}".purple + " issues, added " + "#{succesfully_added}".green + " failed " + "#{succesfully_added - index}".red
   end
 
   def entry_to_tags( entry )
@@ -62,8 +84,8 @@ class Issues
       tags.push entry["Tracker"].downcase.gsub(/ /, "_")
     end
 
-    if entry["Priority"] != ''
-      tags.push "priority:#{entry["Priority"].downcase.gsub(/ /, "_")}"
+    if entry["Priority"] != '' and entry["Priority"] != 'Normal'
+      tags.push "p:#{entry["Priority"].downcase.gsub(/ /, "_")}"
     end
 
     if entry["Category"] != ''
