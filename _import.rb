@@ -15,8 +15,8 @@ require './classes/users'
 
 
 # script vars
-REPO = "/repos/hems/testing_github_api"
-FILE = "csv/max_issues.csv"
+REPO = "/repos/hems/jamoma_issue_sandbox"
+FILE = "csv/max.csv"
 
 
 puts "Redmine to Github issues".green
